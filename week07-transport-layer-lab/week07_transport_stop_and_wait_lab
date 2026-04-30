@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""
+Week 7 Lab: Transport Layer - Stop-and-Wait vs Sliding Window
+
+EC 441 - Introduction to Computer Networking  
+
+Run:
+    python3 week07_transport_stop_and_wait_lab.py
+"""
+
+import math
+
+
+def section(title):
+    print("\n" + "=" * 72)
+    print(title)
+    print("=" * 72)
+
+
+def transmission_time(packet_bits, bandwidth_bps):
+    return packet_bits / bandwidth_bps
+
+
+def stop_and_wait_utilization(packet_bits, bandwidth_bps, rtt_seconds):
+    t_tx = transmission_time(packet_bits, bandwidth_bps)
+    return t_tx / (rtt_seconds + t_tx)
+
+
+def bandwidth_delay_product(bandwidth_bps, rtt_seconds):
+    return bandwidth_bps * rtt_seconds
+
+
+def packets_to_fill_pipe(bdp_bits, packet_bits):
+    return math.ceil(bdp_bits / packet_bits)
+
+
+def sliding_window_utilization(window_packets, packet_bits, bandwidth_bps, rtt_seconds):
+    bdp = bandwidth_delay_product(bandwidth_bps, rtt_seconds)
+    inflight_bits = window_packets * packet_bits
+    return min(1.0, inflight_bits / bdp)
+
+
+def run_case(name, bandwidth_bps, rtt_seconds, packet_bytes, windows):
+    section(name)
+
+    packet_bits = packet_bytes * 8
+    t_tx = transmission_time(packet_bits, bandwidth_bps)
+    bdp = bandwidth_delay_product(bandwidth_bps, rtt_seconds)
+    needed_window = packets_to_fill_pipe(bdp, packet_bits)
+    sw_util = stop_and_wait_utilization(packet_bits, bandwidth_bps, rtt_seconds)
+
+    print(f"Bandwidth: {bandwidth_bps:,} bits/sec")
+    print(f"RTT: {rtt_seconds:.3f} sec")
+    print(f"Packet size: {packet_bytes} bytes = {packet_bits:,} bits")
+    print(f"Transmission time per packet: {t_tx:.8f} sec")
+    print(f"Bandwidth-delay product: {bdp:,.0f} bits")
+    print(f"Packets needed to fill the pipe: {needed_window:,}")
+    print()
+    print(f"Stop-and-Wait utilization: {sw_util * 100:.6f}%")
+    print(f"Approx Stop-and-Wait throughput: {bandwidth_bps * sw_util:,.2f} bits/sec")
+
+    print("\nSliding window comparison:")
+    print(f"{'Window':<12} {'Utilization':<16} {'Approx Throughput'}")
+    print("-" * 50)
+
+    for w in windows:
+        util = sliding_window_utilization(w, packet_bits, bandwidth_bps, rtt_seconds)
+        throughput = bandwidth_bps * util
+        print(f"{w:<12} {util * 100:<15.4f}% {throughput:,.2f} bits/sec")
+
+
+def go_back_n_loss_demo(window_size=4, lost_packet=2):
+    section("Go-Back-N Loss Demo")
+    print(f"Window size = {window_size}")
+    print(f"Lost packet = {lost_packet}\n")
+    print("Sender sends packets: 0, 1, 2, 3")
+    print("Receiver gets 0 -> sends ACK 0")
+    print("Receiver gets 1 -> sends ACK 1")
+    print("Packet 2 is lost")
+    print("Receiver gets 3 out of order -> discards it and repeats ACK 1")
+    print("Sender times out waiting for ACK 2")
+    print("Go-Back-N retransmits packets 2, 3, 4, 5")
+    print("\nKey idea: one lost packet can cause the whole outstanding window to be retransmitted.")
+
+
+def selective_repeat_loss_demo(window_size=4, lost_packet=2):
+    section("Selective Repeat Loss Demo")
+    print(f"Window size = {window_size}")
+    print(f"Lost packet = {lost_packet}\n")
+    print("Sender sends packets: 0, 1, 2, 3")
+    print("Receiver gets 0 -> sends ACK 0")
+    print("Receiver gets 1 -> sends ACK 1")
+    print("Packet 2 is lost")
+    print("Receiver gets 3 out of order -> buffers it and sends ACK 3")
+    print("Sender times out only for packet 2")
+    print("Selective Repeat retransmits only packet 2")
+    print("Receiver gets 2 -> delivers 2 and buffered 3 in order")
+    print("\nKey idea: Selective Repeat is more efficient but needs receiver buffering and more timers.")
+
+
+def main():
+    section("Transport Layer Lab: Stop-and-Wait vs Sliding Window")
+    print("This lab shows why reliable transport needs pipelining.")
+    print("Stop-and-Wait is correct, but it keeps only one packet in flight.")
+    print("On high bandwidth-delay-product paths, that wastes almost the whole link.")
+
+    run_case(
+        name="Case 1: High Bandwidth / High RTT Satellite Link",
+        bandwidth_bps=1_000_000_000,
+        rtt_seconds=0.600,
+        packet_bytes=1500,
+        windows=[1, 10, 100, 1000, 10000, 50000],
+    )
+
+    run_case(
+        name="Case 2: Lower RTT Campus / Regional Link",
+        bandwidth_bps=100_000_000,
+        rtt_seconds=0.020,
+        packet_bytes=1500,
+        windows=[1, 4, 10, 50, 100, 200],
+    )
+
+    go_back_n_loss_demo()
+    selective_repeat_loss_demo()
+
+    section("Lab Conclusion")
+    print("Stop-and-Wait is simple and reliable, but utilization collapses when RTT is large.")
+    print("Sliding windows keep multiple packets in flight, which is necessary to fill the pipe.")
+    print("Go-Back-N is simpler but wastes bandwidth after loss.")
+    print("Selective Repeat is more efficient after loss but requires buffering and more bookkeeping.")
+    print("TCP borrows ideas from both: cumulative ACKs like GBN, buffering/SACK like SR.")
+
+
+if __name__ == "__main__":
+    main()
