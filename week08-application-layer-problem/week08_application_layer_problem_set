@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""
+Week 8 Problem Set: Application Layer - DNS, HTTP, and QUIC
+
+EC 441 - Introduction to Computer Networking
+
+Run:
+    python3 week08_application_layer_problem_set.py
+"""
+
+
+def section(title):
+    print("\n" + "=" * 72)
+    print(title)
+    print("=" * 72)
+
+
+def problem_1():
+    section("Problem 1: Classifying Application Protocol Design Patterns")
+    print("Question: Classify HTTP/1.1 using application-layer design axes.")
+    print("\nSolution:")
+    print("- Interaction: request/response")
+    print("- State: stateless on the wire")
+    print("- Encoding: text-based ASCII headers")
+    print("- Direction: pull-based")
+    print("- Connection: persistent with keep-alive")
+    print("- Architecture: client-server")
+    print("\nCookies and server-side session tables create the illusion of state.")
+
+
+def problem_2():
+    section("Problem 2: DNS Resolution Chain")
+    print("Question: A client wants the IP address for www.eng.bu.edu. Describe the DNS path.")
+    print("\nSolution:")
+    steps = [
+        "The client stub resolver asks a recursive resolver.",
+        "The recursive resolver checks its cache.",
+        "If not cached, it asks a root server where to find .edu.",
+        "The .edu TLD server points it toward bu.edu name servers.",
+        "The bu.edu authoritative server points toward eng.bu.edu records.",
+        "The final authoritative server returns the A or AAAA record.",
+        "The recursive resolver caches the answer until the TTL expires.",
+        "The resolver returns the IP address to the client.",
+    ]
+    for i, step in enumerate(steps, start=1):
+        print(f"{i}. {step}")
+
+
+def problem_3():
+    section("Problem 3: DNS TTL and Caching")
+    print("Question: A DNS A record has TTL = 300 seconds. If received at 12:00:00, when does it expire?")
+    print("\nSolution:")
+    print("TTL = 300 seconds = 5 minutes")
+    print("12:00:00 + 5 minutes = 12:05:00")
+    print("The resolver can use the cached answer until 12:05:00.")
+    print("\nTradeoff: low TTL gives faster failover, while high TTL lowers DNS query load.")
+
+
+def problem_4():
+    section("Problem 4: HTTP/1.1 Request and Response")
+    print("Question: Write a minimal HTTP/1.1 GET request for /index.html on example.com.")
+    print("\nSolution:")
+    print("GET /index.html HTTP/1.1")
+    print("Host: example.com")
+    print("User-Agent: ec441-client")
+    print("Accept: */*")
+    print("\nThe Host header tells the server which website the client wants.")
+
+
+def problem_5():
+    section("Problem 5: MIME Type Interpretation")
+    print("Question: What does Content-Type: application/json; charset=utf-8 mean?")
+    print("\nSolution:")
+    print("- application/json means the body should be interpreted as JSON.")
+    print("- charset=utf-8 means text bytes should be decoded using UTF-8.")
+    print("- The client uses this to parse the response correctly.")
+
+
+def problem_6():
+    section("Problem 6: HTTP/1.1 vs HTTP/2 vs HTTP/3")
+    print("Question: Match each HTTP version to the main problem it solves.")
+    print("\nSolution:")
+    print("HTTP/1.1: persistent connections and Host header, but pipelining has HOL blocking.")
+    print("HTTP/2: binary framing and multiplexing over TCP; solves application-level HOL blocking.")
+    print("HTTP/3: runs over QUIC on UDP; avoids TCP-layer HOL blocking and includes TLS.")
+
+
+def problem_7():
+    section("Problem 7: Why QUIC Uses UDP")
+    print("Question: Why does QUIC run over UDP instead of replacing TCP directly?")
+    print("\nSolution:")
+    print("TCP is in OS kernels and middleboxes make assumptions about it.")
+    print("Changing TCP across the internet would be slow.")
+    print("UDP is simple and usually passes through middleboxes.")
+    print("QUIC builds reliability, streams, encryption, congestion control, and migration above UDP.")
+
+
+def problem_8():
+    section("Problem 8: WebSocket vs HTTP Request/Response")
+    print("Question: Why do chat apps often use WebSocket instead of normal HTTP?")
+    print("\nSolution:")
+    print("Normal HTTP is client-initiated request/response.")
+    print("Chat needs the server to push messages as soon as they arrive.")
+    print("WebSocket upgrades an HTTP connection into a long-lived bidirectional channel.")
+
+
+def reflection():
+    section("Reflection")
+    print("This problem set helped me see the application layer as protocol design, not just websites.")
+    print("DNS, HTTP, QUIC, and WebSocket all solve different communication problems.")
+    print("The biggest takeaway is that application protocols are shaped by tradeoffs:")
+    print("text vs binary, stateless vs stateful, request/response vs push, and TCP vs UDP-based transports.")
+
+
+def main():
+    print("Week 8 Problem Set: Application Layer - DNS, HTTP, and QUIC")
+    print("Running worked solutions...")
+    problem_1()
+    problem_2()
+    problem_3()
+    problem_4()
+    problem_5()
+    problem_6()
+    problem_7()
+    problem_8()
+    reflection()
+
+
+if __name__ == "__main__":
+    main()
